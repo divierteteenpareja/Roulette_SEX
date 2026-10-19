@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Roulette Sex</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0d040a;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        .glow-pink {
+            box-shadow: 0 0 25px rgba(255, 42, 112, 0.4);
+        }
+        .glow-gold {
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+        .text-glow {
+            text-shadow: 0 0 15px rgba(255, 42, 112, 0.6);
+        }
+        .bg-custom-gradient {
+            background: radial-gradient(circle at center, #230b1b 0%, #1a0814 60%, #0a0206 100%);
+        }
+        /* Custom scrollbar for result cards */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(26, 8, 20, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ff2a70;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="h-full bg-custom-gradient flex flex-col justify-between selection:bg-pink-600 selection:text-white">
+
+    <!-- Header Principal -->
+    <header class="w-full px-6 py-4 flex items-center justify-between border-b border-pink-950/40 backdrop-blur-md bg-black/30 sticky top-0 z-20">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl">🔥</span>
+            <h1 class="text-xl sm:text-2xl font-extrabold tracking-wider bg-gradient-to-r from-pink-500 via-rose-400 to-amber-300 bg-clip-text text-transparent text-glow">
+                ROULETTE SEX
+            </h1>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button id="info-btn" onclick="openInfoModal()" class="px-4 py-2 rounded-full bg-pink-950/60 border border-pink-600/50 text-pink-300 font-semibold text-sm hover:bg-pink-900/60 transition-all shadow-sm active:scale-95 flex items-center space-x-1">
+                <span>ℹ️</span>
+                <span>INFO</span>
+            </button>
+            <button id="reset-btn" onclick="openResetModal()" class="px-3 py-2 rounded-full bg-neutral-900/80 border border-neutral-700 text-neutral-400 hover:text-white text-xs transition-all active:scale-95" title="Reiniciar Partida">
+                🔄
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col items-center justify-center p-4 max-w-md mx-auto w-full relative">
+
+        <!-- Bloqueo Inicial / Mensaje de Estado / Contador 7 días -->
+        <div id="lock-banner" class="w-full mb-3 p-3 bg-pink-950/30 border border-pink-700/40 rounded-2xl text-center backdrop-blur-sm transition-all duration-300">
+            <p id="lock-status-text" class="text-xs sm:text-sm text-pink-200/90 font-medium">
+                🔒 Ruleta bloqueada. Debes leer la información (INFO) antes de tu primera tirada.
+            </p>
+        </div>
+
+        <!-- Ruleta Central & Contenedor Canvas -->
+        <div class="relative w-72 h-72 sm:w-80 sm:h-80 my-2 flex items-center justify-center">
+            <!-- Puntero Superior -->
+            <div class="absolute -top-3 z-10 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[22px] border-t-amber-400 drop-shadow-[0_2px_8px_rgba(255,215,0,0.8)]"></div>
+            
+            <!-- Lienzo de Ruleta -->
+            <canvas id="roulette-canvas" class="w-full h-full rounded-full cursor-pointer glow-pink transition-transform duration-100" onclick="spinRoulette()"></canvas>
+
+            <!-- Botón Central Giratorio -->
+            <button id="spin-center-btn" onclick="spinRoulette()" class="absolute w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-pink-600 to-rose-900 border-4 border-amber-300/80 text-white font-extrabold text-sm sm:text-base tracking-widest shadow-2xl glow-gold flex flex-col items-center justify-center hover:scale-105 active:scale-95 transition-all">
+                <span>GIRAR</span>
+                <span class="text-[10px] text-amber-200/80 font-normal">AZAR</span>
+            </button>
+        </div>
+
+        <!-- Prompt / Instrucción Táctil -->
+        <div class="mt-3 text-center">
+            <p class="text-xs text-neutral-400 animate-pulse" id="instruction-prompt">
+                Toca la ruleta o el botón central para hacer girar el destino
+            </p>
+        </div>
+
+        <!-- Reto Activo Actual (si existe) -->
+        <div id="active-challenge-widget" class="w-full mt-3 p-4 rounded-2xl bg-neutral-900/80 border border-pink-900/60 backdrop-blur-md hidden shadow-lg">
+            <div class="flex items-center justify-between mb-1">
+                <span class="text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-pink-600/30 text-pink-300 font-bold" id="widget-category">Categoría</span>
+                <span class="text-xs text-amber-400 font-medium">⏳ Desafío en curso</span>
+            </div>
+            <h3 class="text-base font-bold text-white mb-1" id="widget-title">Título del Reto</h3>
+            <button onclick="viewActiveChallenge()" class="text-xs text-pink-400 hover:text-pink-300 underline font-semibold mt-1">Ver detalles completos del desafío &rarr;</button>
+        </div>
+    </main>
+
+    <!-- Footer Simple -->
+    <footer class="w-full py-3 text-center border-t border-pink-950/30 bg-black/20 text-neutral-500 text-xs">
+        Roulette Sex &bull; Explora, Juega y Enciende la Pasión
+    </footer>
+
+    <!-- MODAL INFO -->
+    <div id="info-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-neutral-900 border border-pink-900/60 w-full max-w-lg max-h-[90vh] rounded-3xl p-6 flex flex-col shadow-2xl relative overflow-hidden">
+            <div class="flex items-center justify-between pb-4 border-b border-neutral-800">
+                <h2 class="text-xl font-bold text-pink-400 flex items-center space-x-2">
+                    <span>🔥</span>
+                    <span>ROULETTE SEX</span>
+                </h2>
+                <button onclick="closeInfoModal()" class="w-8 h-8 rounded-full bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center text-sm font-bold">✕</button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto py-4 space-y-4 text-sm text-neutral-300 leading-relaxed pr-1">
+                <div class="p-3 bg-pink-950/20 border border-pink-900/30 rounded-xl text-pink-200 font-medium italic">
+                    "Reinventad el deseo. Romped las reglas."
+                </div>
+                
+                <p>¿Sentís que la llama necesita un nuevo aliento o queréis llevar vuestra complicidad al siguiente nivel? Roulette Sex nace con un único propósito: transformar la rutina en una aventura cargada de morbo, juego y tentación.</p>
+                
+                <p>Dejad que el azar tome las riendas de vuestra intimidad. Con cada tirada, la ruleta seleccionará de forma aleatoria experiencias excitantes, retos provocadores y nuevas perspectivas del placer para disfrutar juntos, sin prisas y sin tapujos.</p>
+                
+                <h3 class="font-bold text-amber-300 text-base pt-2">🎲 ¿Cómo funciona el juego?</h3>
+                <p>Para que la tensión se mantenga viva y podáis paladear cada momento al máximo, el juego está diseñado para que dediquéis <strong>una semana (7 días) a cada desafío</strong>. Una vez aceptado un reto, la ruleta permanecerá bloqueada durante ese periodo para que podáis disfrutarlo a fondo.</p>
+                
+                <p>Los desafíos se dividen en dos universos de placer:</p>
+                <ul class="space-y-2 pl-2">
+                    <li class="flex items-start space-x-2">
+                        <span class="text-pink-500 font-bold">✦</span>
+                        <div><strong class="text-white">Sex-Posición:</strong> Un escaparate de nuevas formas de fusionar vuestros cuerpos, romper la monotonía postural y descubrir sensaciones que jamás imaginasteis.</div>
+                    </li>
+                    <li class="flex items-start space-x-2">
+                        <span class="text-pink-500 font-bold">✦</span>
+                        <div><strong class="text-white">Sex-Desafíos:</strong> Retos sensuales, juegos de rol y propuestas audaces que despertarán vuestra mente, desafiarán vuestros límites y encenderán la chispa en los rincones más imprevistos.</div>
+                    </li>
+                </ul>
+
+                <p class="pt-2 text-ms text-neutral-400 border-t border-neutral-800">
+                    Recuerda: Una pareja que explora, juega y mantiene viva la pasión es una pareja conectada en cuerpo, mente y alma. Dejad que la ruleta gire y descubrid vuestro próximo secreto.
+                </p>
+            </div>
+
+            <div class="pt-4 border-t border-neutral-800 flex justify-end">
+                <button onclick="closeInfoModal()" class="w-full py-3 rounded-xl bg-gradient-to-r from-pink-600 to-rose-700 text-white font-bold text-sm shadow-lg hover:opacity-90 active:scale-95 transition-all">
+                    Volver al Juego & Desbloquear Ruleta
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RESULTADO / CARTA DE RETO -->
+    <div id="result-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-neutral-900 border border-pink-600/50 w-full max-w-lg max-h-[90vh] rounded-3xl p-6 flex flex-col shadow-[0_0_40px_rgba(255,42,112,0.3)] relative overflow-hidden">
+            <div class="flex items-center justify-between pb-3 border-b border-neutral-800">
+                <span id="modal-category-tag" class="text-xs uppercase font-extrabold px-3 py-1 rounded-full bg-pink-600/30 text-pink-300 border border-pink-500/30">Categoría</span>
+                <span class="text-xs text-amber-400 font-medium">✨ Nuevo Desafío Seleccionado</span>
+            </div>
+
+            <div class="flex-1 overflow-y-auto py-4 space-y-4 text-sm text-neutral-200 leading-relaxed pr-1">
+                <h2 id="modal-title" class="text-xl sm:text-2xl font-black text-white tracking-wide">Título del Desafío</h2>
+                
+                <div class="p-4 rounded-2xl bg-pink-950/20 border border-pink-900/30 space-y-2">
+                    <p class="text-xs uppercase font-bold text-pink-400 tracking-wider">Descripción Sensual</p>
+                    <p id="modal-description" class="text-neutral-300 whitespace-pre-line text-sm sm:text-base"></p>
+                </div>
+
+                <div id="modal-tip-container" class="p-4 rounded-2xl bg-amber-950/20 border border-amber-900/30 space-y-1">
+                    <p class="text-xs uppercase font-bold text-amber-400 tracking-wider">💡 Tip / Sugerencia Extra</p>
+                    <p id="modal-tip" class="text-amber-100/90 text-xs sm:text-sm italic whitespace-pre-line"></p>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-neutral-800">
+                <button onclick="acceptChallenge()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-pink-600 via-rose-600 to-amber-500 text-white font-extrabold text-sm shadow-xl glow-pink hover:opacity-95 active:scale-95 transition-all">
+                    Aceptar y Guardar Desafío (Activar Bloqueo de 7 Días)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARTIDA GUARDADA -->
+    <div id="save-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-neutral-900 border border-neutral-700 w-full max-w-sm rounded-3xl p-6 text-center space-y-4 shadow-2xl">
+            <div class="w-12 h-12 bg-pink-950/60 rounded-full flex items-center justify-center mx-auto text-pink-400 text-xl font-bold border border-pink-800">
+                💾
+            </div>
+            <h3 class="text-lg font-bold text-white">Partida Guardada Encontrada</h3>
+            <p class="text-xs text-neutral-400">Tienes una partida en curso. ¿Deseas continuar donde lo dejaste o empezar una nueva?</p>
+            <div class="space-y-2 pt-2">
+                <button onclick="resumeGame()" class="w-full py-3 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-sm transition-all shadow-md">
+                    Continuar Partida
+                </button>
+                <button onclick="startNewGameConfirm()" class="w-full py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold text-xs transition-all">
+                    Empezar Nueva Partida
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL REINICIO / CONFIRMACIÓN -->
+    <div id="reset-confirm-modal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-neutral-900 border border-neutral-700 w-full max-w-sm rounded-3xl p-6 text-center space-y-4 shadow-2xl">
+            <div class="w-12 h-12 bg-red-950/60 rounded-full flex items-center justify-center mx-auto text-red-400 text-xl font-bold border border-red-800">
+                ⚠️
+            </div>
+            <h3 class="text-lg font-bold text-white">¿Reiniciar Partida?</h3>
+            <p class="text-xs text-neutral-400">Se borrará todo el progreso actual, los bloqueos temporales y la ruleta volverá a su estado inicial.</p>
+            <div class="flex space-x-2 pt-2">
+                <button onclick="closeResetModal()" class="flex-1 py-2.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold text-xs transition-all">
+                    Cancelar
+                </button>
+                <button onclick="executeResetGame()" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition-all shadow-md">
+                    Sí, Reiniciar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Principal de la Lógica del Juego con Temporizador de 7 Días -->
+    <script>
+        // --- BASE DE DATOS DE PROPUESTAS (20 EXACTAS) ---
+        const proposalsData = [
+            // SEX-POSITION (9 propuestas)
+            {
+                id: "pos_1",
+                category: "Sex-Position",
+                title: "SALIR DE LA ZONA DE CONFORT",
+                description: "Romper con la rutina requiere solo un escenario inesperado y dos ganas desbordantes. Vuestro santuario no será la cama, sino ese rincón neutro de la casa que jamás habéis mirado con intención erótica: el centro del salón, un pasillo o junto a la mesa de la cocina.\n\nPreparaos por separado, vistiéndoos con vuestra ropa más elegante y seductora, ocultando debajo lencería sugerente. El encuentro en el punto acordado será magnético. Con la sola presencia de una silla como cómplice en mitad del espacio, acercaos despacio. Desnudaos mutuamente con lentitud calculada, disfrutando de cada prenda que cae y de las manos que recorren la piel erizada.\n\nUna vez al desnudo, utilizad la silla para fusionar vuestros cuerpos en un abrazo profundo, dejando que ella tome las riendas a ritmo pausado cabalgando sobre él como una auténtica cowboy.",
+                tip: "Si queréis repetir la experiencia en otra ocasión o darle un giro aún más vibrante, probad a usar como escenario la mesa de la cocina o el vaivén de la lavadora durante el centrifugado. ¡Cualquier rincón es perfecto para crear un recuerdo ardiente!"
+            },
+            {
+                id: "pos_2",
+                category: "Sex-Position",
+                title: "FUEGO FUGAZ",
+                description: "A veces, la pasión más ardiente no necesita horas de preludio, sino una chispa repentina y un latido desbocado. Esta propuesta os invita a robarle un instante al tiempo y dejaros arrastrar por la más pura espontaneidad fuera de casa.\n\nNo busquéis el escenario perfecto; buscad el momento exacto en el que el deseo os atraviese sin previo aviso. Puede ser durante un paseo nocturno, en un rincón apartado del mundo o en el asiento del coche antes de abrir la puerta de casa. La emoción de lo efímero, el cosquilleo en el estómago y la urgencia por fundiros el uno en el otro harán que el tiempo se detenga por completo. Un encuentro breve, salvaje y eléctrico que os dejará sin aliento y con una sonrisa cómplice grabada en los labios el resto del día.",
+                tip: "Elegid prendas que faciliten el acceso rápido (faldas fluidas, pantalones sin demasiados botones) y dejad que las manecillas del reloj y la falta de tiempo jueguen a vuestro favor. ¡Lo breve, si es intenso, arde con más fuerza!"
+            },
+            {
+                id: "pos_3",
+                category: "Sex-Position",
+                title: "ALTO RIESGO / PELIGRO TENTADOR",
+                description: "Hay algo innegablemente magnético en romper las reglas y coquetear con lo prohibido. La adrenalina será vuestra mejor aliada. El reto consiste en trasladar la pasión a la terraza, al patio o frente a un gran ventanal del salón con las cortinas abiertas y las luces tenues encendidas.\n\nJugar con el riesgo de ser vistos acelerará vuestro pulso como nunca. Dejen que el morbo de lo imprevisto transforme cada roce en una chispa incontrolable.",
+                tip: "Mantened una luz muy baja cerca de vosotros (como una vela o una tenue bombilla cálida) para proyectar siluetas sugerentes, aumentando la intriga y la intensidad del momento sin exponeros por completo."
+            },
+            {
+                id: "pos_4",
+                category: "Sex-Position",
+                title: "CAMBIO DE ROLES",
+                description: "Esta vez las reglas cambian y los roles se reinventan. Os invitamos a explorar una de las fantasías más intensas y placenteras: el juego de la sumisión y el dominio absoluto.\n\nElla toma el control total, vistiendo la fuerza y la sensualidad de mandar en el juego, explorando una perspectiva de poder sumamente excitante. Él se entrega por completo, permitiéndose soltar las riendas, confiar y descubrir sensaciones orgásmicas profundas e inexploradas gracias a la estimulación directa de la próstata.\n\nCon caricias pausadas, besos que marcan el ritmo y una complicidad absoluta, abrid la puerta a una experiencia inolvidable. La clave es dejarse llevar, disfrutar de la vulnerabilidad y sentir el placer sin prisa.\n\nEl pegging es la práctica sexual que está más en auge actualmente, y es que cada vez son más las parejas que se inician en esta práctica sexual.",
+                tip: "La paciencia y la suavidad son vuestras mejores aliadas. Usad abundante lubricante a base de agua y empezad con calma. Si es vuestra primera vez, optad por un tamaño pequeño y cercano para aclimatar el cuerpo; si ya sabéis lo que es el placer sin límites, atreveros a subir la intensidad con un tamaño más grande del habitual."
+            },
+            {
+                id: "pos_5",
+                category: "Sex-Position",
+                title: "PLACER PROHIBIDO",
+                description: "Esta vez nos enfocaremos en una zona cargada de sensibilidad, misterio y una excitación sumamente intensa. Hablamos de la zona conocida coloquialmente como “La puerta de atrás”. En esta ocasión el pene queda en segundo plano, ya que no habrá penetración: el verdadero juego estará en el tacto, las manos y la magia de vuestros juguetes sexuales preferidos.\n\nPodéis poneros de acuerdo o dejar que el azar decida quién será el afortunado en entregarse al placer anal y quién asumirá el papel de explorar. Quien tome el control tendrá la oportunidad de jugar a su antojo, combinando roces suaves, vibraciones tentadoras y una presión progresiva que erizará la piel. El objetivo es dejarse llevar por una estimulación diferente, llena de tensión erótica, respiraciones entrecortadas y un clímax que recorrerá todo el cuerpo.",
+                tip: "Un ambiente relajado y una higiene impecable son la clave para disfrutar sin inhibiciones. Una breve lavativa anal antes del juego os aportará toda la seguridad necesaria. Recordad usar abundante lubricante a base de agua y avanzar siempre con mucha calma y caricias previas."
+            },
+            {
+                id: "pos_6",
+                category: "Sex-Position",
+                title: "HIELO Y FUEGO",
+                description: "El sexo oral es un clásico inagotable, pero esta vez lo elevaréis a otra dimensión jugando con los opuestos. La temperatura corporal se disparará gracias al contraste entre el frescor más gélido y el calor más entregado.\n\nÉl tomará la iniciativa jugando con un pequeño cubito de hielo en su boca, recorriendo con paciencia y maestría la piel, los labios y el clítoris de ella, deslizando sutilmente el frío por su interior. Esa sacudida repentina despertará cada terminación nerviosa, multiplicando la sensibilidad y haciendo que cada roce se sienta eléctrico.\n\nElla, por su parte, potenciará el juego utilizando un labial de efecto calor o frío —o el clásico caramelo mentolado como cómplice secreto—. En su turno de la felación, recordará que el secreto de una entrega absoluta no está solo en el cuerpo del pene, sino en la devoción por los testículos: mimos, lametones, succiones suaves y caricias húmedas en los testículos y el escroto, le harán perder el control por completo.",
+                tip: "Al introducir el hielo en la vagina durante el cunnilingus, mantenedlo solo durante unos segundos o un máximo de un minuto para que el frío extremo juegue a vuestro favor sin causar molestias. ¡El contraste debe ser puro placer!"
+            },
+            {
+                id: "pos_7",
+                category: "Sex-Position",
+                title: "BDSM",
+                description: "El BDSM bien entendido es, ante todo, un ejercicio sublime de confianza, complicidad y entrega absoluta. En esta ocasión, las dinámicas habituales se transforman por completo: ella toma el timón del control, convirtiéndose en la autoridad que marca cada regla, cada pausa y cada ritmo, mientras él se libera de todo control para entregarse al placer de obedecer.\n\nCon órdenes susurradas al oído, caricias que anticipan la piel y una mirada fija que desarma, la tensión en la habitación se elevará segundo a segundo. Cada gesto de mando por parte de ella provocará en él una ola de excitación magnética, descubriendo que rendirse a la voluntad de su pareja es, en realidad, una de las experiencias más liberadoras y excitantes que existen.",
+                tip: "La comunicación previa y el respeto por los límites son fundamentales. Acordad una palabra de seguridad para modular el juego a vuestro gusto y atreveos a usar una venda en los ojos para potenciar la anticipación a través del tacto. ¡El poder de ceder el control nunca fue tan estimulante!"
+            },
+            {
+                id: "pos_8",
+                category: "Sex-Position",
+                title: "EL ARTE DEL KAMA-SUTRA",
+                description: "El arte de amar tiene mil formas y, esta noche, vuestros cuerpos se convertirán en el lienzo para descubrirlas. Olvidaos por un momento de la comodidad de lo cotidiano y abrid las páginas del clásico Kama-Sutra, (ya sea en un libro o explorando online).\n\nBajo una luz tenue, buscad y elegid de mutuo acuerdo una postura del Kama-Sutra que jamás hayáis probado antes. El simple hecho de indagar juntos, debatir qué os enciende y visualizar el momento ya destila un morbo incontrolable. Una vez seleccionada, poneos manos a la obra: ajustad los ángulos, entrelazad vuestras extremidades con paciencia y dejaos llevar por un ritmo diferente, donde cada centímetro de piel encaja de una forma nueva, intensa y profundamente conectada.",
+                tip: "Haced la elección de la postura a lo largo del día mediante mensajes, dejando que la anticipación trabaje a vuestro favor hasta que llegue el momento de ponerla en práctica en la intimidad del hogar."
+            },
+            {
+                id: "pos_9",
+                category: "Sex-Position",
+                title: "AVENTURA CLANDESTINA",
+                description: "El mundo exterior está lleno de rincones ocultos esperando a ser descubiertos por vuestro deseo. Las cuatro paredes de casa se quedan atrás para dar paso a la adrenalina de lo imprevisto y la excitación de estar al margen de lo cotidiano.\n\nBuscad un escenario fuera de vuestra zona de confort: la intimidad cómplice en los asientos traseros del coche bajo las estrellas, un rincón apartado y sombrío en un parque solitario, o la tensión contenida en las últimas filas de una sala de cine. La urgencia del entorno, el miedo leve a ser descubiertos y la necesidad de mantener el silencio convertirán cada caricia en un acto eléctrico y salvaje. Dejad que la aventura os recuerde lo emocionante que es perder el control en el lugar menos pensado.",
+                tip: "Elegid el destino con algo de picardía previa, vestíos con ropa fácil de quitar y mantener la discreción os asegurará una experiencia tan excitante como segura. ¡La emoción de lo prohibido jamás falla!"
+            },
+
+            // SEX-DESAFÍOS (11 propuestas, siendo la última "EL SELLO DE LA FUSIÓN")
+            {
+                id: "des_1",
+                category: "Sex-Desafíos",
+                title: "TENSIÓN EN EL SOFÁ",
+                description: "Noche de peli y manta. Convertid el plan más casero y cotidiano en una trampa de alta tensión erótica. Desprenderos de toda la ropa y sentaos juntos en el sofá, completamente desnudos, mientras el frío del salón contrasta con el calor de vuestros cuerpos rozándose.\n\nLa clave de la noche es una buena película o serie de alto contenido erótico —donde las miradas, los susurros y las tramas subidas de tono alimenten vuestra imaginación—.\n\nEl auténtico reto de la noche es la resistencia. Ella deberá observar atenta cada reacción de su chico frente a las escenas de la pantalla; si descubre la innegable evidencia de una erección, podrá jugar con él, acariciarle y provocarle hasta el límite... pero con una norma de hierro: está prohibido llegar al orgasmo antes de que terminen los créditos. La anticipación, el autocontrol y las ganas acumuladas os llevarán al borde del colapso placentero.",
+                tip: "No estaréis solo viendo la pantalla: el juego invisible os mantendrá en vilo. Ella llevará un vibrador con mando a distancia y él un plug anal, convirtiendo cada latido y cada movimiento en una descarga eléctrica secreta. Jugar con el mando a distancia del vibrador a escondidas mientras la trama de la película se intensifica hará que os cueste apartar la vista el uno del otro."
+            },
+            {
+                id: "des_2",
+                category: "Sex-Desafíos",
+                title: "MASAJE RELAX",
+                description: "El estrés acumulado del día a día desaparece en cuanto las manos de quien amas empiezan a recorrer cada centímetro de tu piel. No hay prisas, ni relojes, ni obligaciones; solo existe el tacto, el calor de los aceites y la devoción por el cuerpo de tu pareja.\n\nEl juego consiste en un masaje erótico integral, donde ningún rincón queda en el olvido. Las manos se deslizan con paciencia, prestando especial atención a las zonas más sensibles y erógenas, despertando escalofríos y avivando el deseo a fuego lento. Todo buen masaje, por supuesto, culmina en una terminación relax inolvidable, donde la tensión acumulada se libera en una ola de puro placer.\n\nComo lo bueno merece su propio espacio, esta propuesta se divide en dos actos: reservad dos días diferentes en el calendario para que ambos podáis ser el centro de atención absoluto, disfrutando de vuestro propio ritual de mimos y conexión sin que nadie tenga prisa por terminar.",
+                tip: "Apaguen las luces principales, encender unas cuantas velas, poned música instrumental muy suave de fondo y calentad un poco de aceite de masaje entre vuestras manos antes de tocar la piel de vuestra pareja. ¡El ambiente lo es todo!"
+            },
+            {
+                id: "des_3",
+                category: "Sex-Desafíos",
+                title: "AZAR Y DESNUDEZ",
+                description: "El juego, la picardía y el azar son las herramientas perfectas para bajar la guardia y encender los preliminares. La ropa es la moneda de cambio y vuestros propios cuerpos son el premio. Os proponemos dos juegos cargados de erotismo, para que jueguéis a modo de preliminares:\n\n• La carta más alta gana: Con una baraja de cartas sobre la mesa y una botella de vuestro licor favorito a mano, cada turno se convierte en un pulso al deseo. Quien robe la carta más alta gana el derecho a dictar sentencia: el ganador deberá elegir si el perdedor se quita una prenda de ropa o toma un chupito.\n• Twister Naked: Si preferís el contacto físico absoluto, rescatad el clásico tablero de juegos de suelo, pero despojándoos por completo de cualquier atisbo de ropa. Entrelazar las extremidades y buscar el equilibrio transformará un juego de niños en una auténtica prueba de fuego y deseo.",
+                tip: "No tengáis prisa por avanzar rápido en el juego. Disfrutad de la caída de cada prenda, de los roces imprevistos al intentar mantener el equilibrio y de cómo las risas se van transformando poco a poco en respiraciones aceleradas."
+            },
+            {
+                id: "des_4",
+                category: "Sex-Desafíos",
+                title: "PIEL CON PIEL",
+                description: "A veces, los gestos más sencillos son los que guardan una mayor carga de intimidad. Esta semana, el pijama se queda en el armario y vuestros cuerpos se despojan de toda barrera para redescubrir el poder del contacto directo.\n\nDormir completamente desnudos transforma el descanso en un juego constante de sensaciones. Cada roce involuntario al girarse, el calor compartido bajo las sábanas y la cercanía de la piel provocan que el deseo se mantenga latiendo a fuego lento, sin necesidad de palabras. Es una forma natural de avivar la complicidad, fundir los sueños en común y recordar que la mejor manera de terminar el día —y de empezar el siguiente— es sintiendo el latido del otro muy cerca.",
+                tip: "Abandonad las mantas individuales y compartid un único edredón ligero. El calor corporal y el roce constante harán que cualquier despertar nocturno se convierta en una invitación natural a la caricia y al deseo espontáneo."
+            },
+            {
+                id: "des_5",
+                category: "Sex-Desafíos",
+                title: "NUDISM AT HOME",
+                description: "Despojarse de la ropa no es solo quitarse telas; es liberar la mente, derribar barreras y conectar desde la autenticidad más pura. Esta propuesta os reta a transformar vuestro hogar en un santuario nudista durante al menos la próxima semana, viviendo la cotidianidad sin una sola prenda encima.\n\nPreparar el desayuno, leer en el sofá o cruzaros en el pasillo se convierte en una danza constante de siluetas, miradas y roces espontáneos. La belleza de ver al otro en su estado más natural fortalece la complicidad, elimina complejos y hace que la tensión erótica se mantenga encendida todo el día. Si la experiencia os atrapa y queréis dar un paso más en vuestra libertad, atreveros a trasladar esta sensación fuera de casa.",
+                tip: "Ajustad la temperatura de casa para estar plenamente cómodos y mantened cortinas o persianas entornadas para preservar vuestra intimidad mientras camináis con absoluta libertad por las habitaciones."
+            },
+            {
+                id: "des_6",
+                category: "Sex-Desafíos",
+                title: "CONFESIONES SECRETAS",
+                description: "La mente es el órgano sexual más poderoso que tenemos. Esta es una invitación a explorar vuestros deseos más profundos a través de las palabras, convirtiendo la conversación en un aperitivo ardiente antes de dar el siguiente paso.\n\nVestíos con vuestra lencería más atractiva y acomodaos en la cama bajo una luz tenue. Mientras las manos comienzan a recorrer sutilmente el cuerpo del otro con caricias pausadas, es momento de lanzar las preguntas. Confesar un fetiche oculto, recordar vuestro momento más salvaje o describir exactamente lo que le haríais al otro en ese mismo instante provocará que el ritmo de la respiración se acelere.",
+                tip: "Preguntas Picantes."
+            },
+            {
+                id: "des_7",
+                category: "Sex-Desafíos",
+                title: "MARATÓN DE PLACER",
+                description: "¿Cuántas veces por semana practicáis sexo? ¿Sabíais que la media está en 3 veces por semana? ¿Listos para romper todas las estadísticas?\n\nEsta semana la rutina cede el testigo a un compromiso ineludible con el disfrute. Olvidaos de la media habitual y convertid los próximos siete días en una misión conjunta donde el único objetivo diario es hacer estallar el placer del otro. La regla es sencilla pero exigente: cada día, sin excepción, debéis reservar un hueco sagrado en vuestras agendas para la intimidad. No importa si es un encuentro rápido al despertar, un sexo oral apasionado al llegar del trabajo o una sesión de coito pausada antes de dormir; el método es libre, pero la meta es obligatoria.",
+                tip: "Cread un pequeño calendario en la puerta de la nevera o en una nota compartida en el móvil para marcar cada orgasmo conseguido del día. ¡Ver la lista completarse al final de la semana os dará una satisfacción inigualable!"
+            },
+            {
+                id: "des_8",
+                category: "Sex-Desafíos",
+                title: "TU CLON DE PLACER",
+                description: "¿Os imagináis inmortalizar el deseo y tener un juguete sexual completamente exclusivo y hecho a vuestra medida? Esta propuesta os invita a vivir un proceso tan divertido como erótico: crear una réplica exacta del pene de él para llevar vuestros juegos en pareja a un nivel superior.\n\nDesde el propio proceso de moldeado —donde el tacto, las risas y la excitación serán los verdaderos protagonistas— hasta el momento de estrenarlo, la experiencia estará repleta de morbo. Contar con un clon idéntico abre un abanico infinito de posibilidades: él podrá observar cómo ella disfruta de su propia esencia, podréis incorporarlo en vuestros juegos o ella podrá sentir la cercanía de él incluso en esos días en los que la distancia los separe.",
+                tip: "Tomaos la fase de creación como un preludio más. Poned música sugerente, servíos una copa y disfrutad del paso a paso de elaboración con humor y muchas caricias."
+            },
+            {
+                id: "des_9",
+                category: "Sex-Desafíos",
+                title: "SIN ROPA INTERIOR",
+                description: "Llevar un secreto ardiente bajo la ropa mientras camináis entre la multitud es una de las sensaciones más estimulantes y adictivas que podéis experimentar. Esta propuesta os reta a ambos a romper con lo estipulado y salir a la calle sin una sola prenda de ropa interior, sin importar el destino: un paseo, una cena, la compra o unas bebidas a media tarde.\n\nSaber que no hay barreras entre la ropa de calle y vuestra piel genera una corriente de aire y de sensibilidad constante con cada paso. La mirada cómicia que os cruzaréis al sentaros en una terraza, el roce de una mano disimulada por debajo de la mesa o el pensamiento cruzado de saberse vulnerables y deseables desatará una tensión erótica brutal.",
+                tip: "Ella puede optar por un vestido o falda fluida para sentir la brisa, mientras que él puede llevar un pantalón holgado o deportivo para una sensación de libertad absoluta."
+            },
+            {
+                id: "des_10",
+                category: "Sex-Desafíos",
+                title: "MISIÓN SEX-SHOP",
+                description: "Entrar en una tienda de artículos sexuales es cruzar la puerta a un universo infinito de fantasías, texturas y posibilidades. Esta propuesta os plantea un reto en apariencia sencillo pero cargado de tensión erótica: visitar juntos un Sex-Shop y salir de allí con un juguete o accesorio nuevo bajo el brazo.\n\nEl verdadero juego estará en el arte de la negociación. Rodeados de luces, lubricantes con aromas tentadores, lencería de impacto y tecnología del placer, tendréis que recorrer los pasillos debatiendo qué es lo que más os despierta el apetito. Ella querrá probar una cosa, él se sentirá atraído por otra... La clave estará en ceder, seducir al otro y poneros de acuerdo en ese único aliado secreto que estrenaréis sin falta.",
+                tip: "Pasead por la tienda en silencio o por separado durante diez minutos, eligiendo mentalmente vuestro objeto favorito sin decírselo al otro antes de defender vuestra propuesta."
+            },
+            {
+                id: "des_11",
+                category: "Sex-Desafíos",
+                title: "EL SELLO DE LA FUSIÓN",
+                description: "Esta prueba está reservada para las parejas que no le temen a nada y buscan experimentar la complicidad desde sus ángulos más salvajes. El 'beso blanco' es una de las prácticas más íntimas y cargadas de morbo que existen, un intercambio de fluidos que rompe con cualquier esquema convencional.\n\nEl juego culmina en el momento culminante de la felación: ella retiene el semen en su boca tras el clímax de él y, sin dudarlo, busca sus labios en un beso ardiente, sellado, profundo y lento, compartiendo de nuevo el fruto de la pasión. Aunque a primera vista pueda desafiar vuestros límites, este gesto representa una entrega total, la eliminación de cualquier pudor y un acto de devoción mutua que os dejará con el corazón palpitando a mil por hora.",
+                tip: "La confianza absoluta es el pilar de este juego. Si queréis matizar el sabor y hacer la experiencia más apetecible, los días previos podéis cuidar la alimentación incorporando frutas dulces como la piña o el mango."
+            }
+        ];
+
+        // --- ESTADO DEL JUEGO ---
+        let gameState = {
+            isLocked: true,          // Bloqueado hasta leer info
+            hasReadInfo: false,      // Si ya abrió el info al menos una vez
+            activeChallenge: null,   // Objeto del reto activo actual
+            challengeExpiry: null,   // Timestamp (milisegundos) de cuándo expira el bloqueo de 7 días
+            history: [],             // IDs de retos ya jugados
+            nextType: 'Sex-Desafíos' // El primer resultado obligatoriamente es Sex-Desafíos
+        };
+
+        let currentSpinningProposal = null;
+        let countdownInterval = null;
+
+        // --- INICIALIZACIÓN ---
+        window.onload = function() {
+            checkLocalStorage();
+            initCanvas();
+            updateUIState();
+            window.addEventListener('resize', initCanvas);
+            
+            // Iniciar comprobación del contador cada segundo
+            setInterval(checkChallengeTimer, 1000);
+        };
+
+        function checkLocalStorage() {
+            const saved = localStorage.getItem('roulette_sex_state');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && (parsed.history?.length > 0 || parsed.activeChallenge)) {
+                        document.getElementById('save-modal').classList.remove('hidden');
+                    }
+                } catch(e) {
+                    console.error("Error al cargar localStorage", e);
+                }
+            }
+        }
+
+        function resumeGame() {
+            const saved = localStorage.getItem('roulette_sex_state');
+            if (saved) {
+                gameState = JSON.parse(saved);
+            }
+            document.getElementById('save-modal').classList.add('hidden');
+            updateUIState();
+        }
+
+        function startNewGameConfirm() {
+            localStorage.removeItem('roulette_sex_state');
+            gameState = {
+                isLocked: true,
+                hasReadInfo: false,
+                activeChallenge: null,
+                challengeExpiry: null,
+                history: [],
+                nextType: 'Sex-Desafíos'
+            };
+            document.getElementById('save-modal').classList.add('hidden');
+            updateUIState();
+            initCanvas();
+        }
+
+        function saveGame() {
+            localStorage.setItem('roulette_sex_state', JSON.stringify(gameState));
+        }
+
+        // --- VERIFICAR TEMPORIZADOR DE 7 DÍAS ---
+        function checkChallengeTimer() {
+            if (!gameState.challengeExpiry) return;
+
+            const now = new Date().getTime();
+            const distance = gameState.challengeExpiry - now;
+
+            const statusText = document.getElementById('lock-status-text');
+            const instructionPrompt = document.getElementById('instruction-prompt');
+
+            if (distance > 0) {
+                // Sigue activo el bloqueo de 7 días
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                statusText.innerHTML = `⏳ Desafío en curso. Próxima tirada disponible en: <strong class='text-amber-300'>${days}d ${hours}h ${minutes}m ${seconds}s</strong>`;
+                if(instructionPrompt) instructionPrompt.innerText = "La ruleta está bloqueada hasta completar vuestra semana de desafío";
+            } else {
+                // El tiempo ha expirado, limpiar expiración si sigue activo el reto pendiente
+                if (gameState.challengeExpiry && gameState.activeChallenge) {
+                    // Opcional: Permitir nueva tirada tras expirar
+                    statusText.innerHTML = "✨ ¡Plazo cumplido! La ruleta está lista para un nuevo desafío.";
+                    if(instructionPrompt) instructionPrompt.innerText = "Toca la ruleta o el botón central para hacer girar el destino";
+                }
+            }
+        }
+
+        // --- GESTIÓN DE UI Y BLOQUEO ---
+        function updateUIState() {
+            const lockBanner = document.getElementById('lock-banner');
+            const statusText = document.getElementById('lock-status-text');
+            const widget = document.getElementById('active-challenge-widget');
+
+            const now = new Date().getTime();
+            const isTimeLocked = gameState.challengeExpiry && gameState.challengeExpiry > now;
+
+            if (gameState.isLocked) {
+                lockBanner.className = "w-full mb-3 p-3 bg-pink-950/40 border border-pink-600/60 rounded-2xl text-center backdrop-blur-sm glow-pink transition-all duration-300";
+                statusText.innerHTML = "🔒 Ruleta bloqueada. Debes leer la información pulsando <strong class='text-pink-300'>INFO</strong> antes de tu primera tirada.";
+            } else if (isTimeLocked) {
+                lockBanner.className = "w-full mb-3 p-3 bg-amber-950/40 border border-amber-600/60 rounded-2xl text-center backdrop-blur-sm transition-all duration-300";
+                // El temporizador se actualizará en el setInterval
+            } else {
+                lockBanner.className = "w-full mb-3 p-3 bg-emerald-950/30 border border-emerald-600/40 rounded-2xl text-center backdrop-blur-sm transition-all duration-300";
+                statusText.innerHTML = "✨ Ruleta desbloqueada y lista para girar.";
+            }
+
+            if (gameState.activeChallenge) {
+                widget.classList.remove('hidden');
+                document.getElementById('widget-category').innerText = gameState.activeChallenge.category;
+                document.getElementById('widget-title').innerText = gameState.activeChallenge.title;
+            } else {
+                widget.classList.add('hidden');
+            }
+        }
+
+        // --- MODAL INFO ---
+        function openInfoModal() {
+            const modal = document.getElementById('info-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function closeInfoModal() {
+            const modal = document.getElementById('info-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                // Desbloquear al leer info si no hay bloqueo temporal activo
+                if (!gameState.challengeExpiry || gameState.challengeExpiry <= new Date().getTime()) {
+                    gameState.isLocked = false;
+                }
+                gameState.hasReadInfo = true;
+                saveGame();
+                updateUIState();
+            }, 300);
+        }
+
+        // --- MODAL RESET ---
+        function openResetModal() {
+            document.getElementById('reset-confirm-modal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('reset-confirm-modal').classList.add('hidden');
+        }
+
+        function executeResetGame() {
+            localStorage.removeItem('roulette_sex_state');
+            gameState = {
+                isLocked: true,
+                hasReadInfo: false,
+                activeChallenge: null,
+                challengeExpiry: null,
+                history: [],
+                nextType: 'Sex-Desafíos'
+            };
+            closeResetModal();
+            updateUIState();
+            initCanvas();
+        }
+
+        // --- LÓGICA DE SELECCIÓN DE PROPUESTAS ---
+        function getNextProposal() {
+            const available = proposalsData.filter(p => !gameState.history.includes(p.id));
+            if (available.length === 0) return null;
+
+            const fusionProposal = proposalsData.find(p => p.title === "EL SELLO DE LA FUSIÓN");
+            const isFusionAvailable = available.some(p => p.id === fusionProposal.id);
+
+            if (isFusionAvailable && available.length === 1) {
+                gameState.nextType = fusionProposal.category;
+                return fusionProposal;
+            }
+
+            let pool = available.filter(p => p.category === gameState.nextType);
+            if (pool.length === 0) {
+                gameState.nextType = gameState.nextType === 'Sex-Position' ? 'Sex-Desafíos' : 'Sex-Position';
+                pool = available.filter(p => p.category === gameState.nextType);
+            }
+
+            if (isFusionAvailable && available.length > 1) {
+                pool = pool.filter(p => p.id !== fusionProposal.id);
+                if (pool.length === 0) {
+                    gameState.nextType = gameState.nextType === 'Sex-Position' ? 'Sex-Desafíos' : 'Sex-Position';
+                    pool = available.filter(p => p.category === gameState.nextType && p.id !== fusionProposal.id);
+                }
+            }
+
+            const randomIndex = Math.floor(Math.random() * pool.length);
+            return pool[randomIndex];
+        }
+
+        // --- CANVAS RULETA ---
+        let currentAngle = 0;
+        let isSpinning = false;
+        const canvas = document.getElementById('roulette-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function initCanvas() {
+            const dpr = window.devicePixelRatio || 1;
+            const size = canvas.parentElement.clientWidth;
+            canvas.width = size * dpr;
+            canvas.height = size * dpr;
+            ctx.scale(dpr, dpr);
+            drawRoulette(currentAngle);
+        }
+
+        function drawRoulette(angle) {
+            const size = canvas.parentElement.clientWidth;
+            const center = size / 2;
+            const radius = center - 8;
+
+            ctx.clearRect(0, 0, size, size);
+
+            const slices = 12;
+            const arc = (2 * Math.PI) / slices;
+
+            for (let i = 0; i < slices; i++) {
+                const startAngle = angle + (i * arc);
+                const endAngle = startAngle + arc;
+
+                ctx.beginPath();
+                ctx.moveTo(center, center);
+                ctx.arc(center, center, radius, startAngle, endAngle);
+                ctx.closePath();
+
+                if (i % 2 === 0) {
+                    ctx.fillStyle = '#1a0814';
+                } else {
+                    ctx.fillStyle = '#2d0c22';
+                }
+                ctx.fill();
+
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = i % 2 === 0 ? '#ff2a70' : '#ffd700';
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(center, center);
+                ctx.rotate(startAngle + arc / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = i % 2 === 0 ? "#ffd700" : "#ff2a70";
+                ctx.font = "bold 11px 'Plus Jakarta Sans', sans-serif";
+                ctx.fillText(i % 2 === 0 ? "DESAFÍO" : "POSICIÓN", radius - 16, 4);
+                ctx.restore();
+            }
+
+            ctx.beginPath();
+            ctx.arc(center, center, radius, 0, 2 * Math.PI);
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = '#ffd700';
+            ctx.stroke();
+        }
+
+        // --- ACCIÓN DE GIRAR RULETA ---
+        function spinRoulette() {
+            if (isSpinning) return;
+
+            // Comprobar si hay bloqueo temporal activo de 7 días
+            const now = new Date().getTime();
+            if (gameState.challengeExpiry && gameState.challengeExpiry > now) {
+                alert("La ruleta está bloqueada hasta que transcurran los 7 días de vuestro desafío actual. ¡Disfrutad del momento!");
+                return;
+            }
+
+            if (gameState.isLocked) {
+                openInfoModal();
+                return;
+            }
+
+            currentSpinningProposal = getNextProposal();
+            if (!currentSpinningProposal) {
+                alert("¡Habéis completado todas las propuestas de la ruleta! Podéis reiniciar la partida para volver a empezar.");
+                return;
+            }
+
+            isSpinning = true;
+            document.getElementById('spin-center-btn').classList.add('opacity-50', 'pointer-events-none');
+
+            const minVisions = 5;
+            const randomExtraAngle = Math.random() * (2 * Math.PI);
+            const targetAngle = currentAngle + (minVisions * 2 * Math.PI) + randomExtraAngle;
+            
+            const duration = 5000;
+            const startTime = performance.now();
+            const startAngle = currentAngle;
+
+            function animateSpin(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                
+                currentAngle = startAngle + (targetAngle - startAngle) * easeOut;
+                drawRoulette(currentAngle);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animateSpin);
+                } else {
+                    isSpinning = false;
+                    document.getElementById('spin-center-btn').classList.remove('opacity-50', 'pointer-events-none');
+                    showResultModal(currentSpinningProposal);
+                }
+            }
+
+            requestAnimationFrame(animateSpin);
+        }
+
+        // --- MOSTRAR CARTA DE RESULTADO ---
+        function showResultModal(proposal) {
+            const modal = document.getElementById('result-modal');
+            document.getElementById('modal-category-tag').innerText = proposal.category;
+            document.getElementById('modal-title').innerText = proposal.title;
+            document.getElementById('modal-description').innerText = proposal.description;
+            
+            const tipContainer = document.getElementById('modal-tip-container');
+            if (proposal.tip) {
+                tipContainer.classList.remove('hidden');
+                const tipElement = document.getElementById('modal-tip');
+                if (proposal.tip === "Preguntas Picantes.") {
+                    tipElement.innerHTML = '<a href="https://divierteteenpareja.github.io/preguntas-picantes2/" target="_blank" rel="noopener noreferrer" class="underline text-amber-200 hover:text-amber-100">Preguntas Picantes</a>';
+                } else {
+                    tipElement.innerText = proposal.tip;
+                }
+            } else {
+                tipContainer.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+        }
+
+        function acceptChallenge() {
+            if (currentSpinningProposal) {
+                gameState.activeChallenge = currentSpinningProposal;
+                gameState.history.push(currentSpinningProposal.id);
+                gameState.nextType = currentSpinningProposal.category === 'Sex-Position' ? 'Sex-Desafíos' : 'Sex-Position';
+                
+                // ACTIVAR BLOQUEO EXACTO DE 7 DÍAS (7 días * 24h * 60m * 60s * 1000ms)
+                const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+                gameState.challengeExpiry = new Date().getTime() + sevenDaysInMs;
+
+                saveGame();
+                updateUIState();
+            }
+
+            const modal = document.getElementById('result-modal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function viewActiveChallenge() {
+            if (gameState.activeChallenge) {
+                showResultModal(gameState.activeChallenge);
+            }
+        }
+    </script>
+</body>
+</html>
